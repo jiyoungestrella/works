@@ -1,26 +1,27 @@
 # 4번 (김지영) 마이페이지 작업 백업
 
-팀 레포 `thgPwls98/OZ_codingSchool`의 `feature/signup`(1번) 위에서 작업한 내용이다.
+팀 레포 `thgPwls98/OZ_codingSchool`의 **main**(1번 #17, 2번 #18 머지 후) 기준으로 작업한 내용이다.
 아직 팀 레포에는 올리지 않았다.
 
-## 바뀐 파일
-(탈퇴 시 uploader_id SET NULL은 1번 강선영님이 `feature/signup`에 넣어서 여기서는 뺐다.)
+## API
+| Method | Endpoint | 설명 |
+|---|---|---|
+| GET | `/api/v1/users/me` | 내 정보 조회 |
+| PATCH | `/api/v1/users/me` | 부서·휴대폰 번호 수정 |
+| PATCH | `/api/v1/users/me/password` | 비밀번호 변경 (성공 시 리프레시 쿠키 삭제) |
+| DELETE | `/api/v1/users/me` | 회원탈퇴 (X-ray는 보존, uploader_id SET NULL은 1번이 넣음) |
 
-- `app/schemas/user.py`: `UpdateMeRequest`, `ChangePasswordRequest` 추가
-- `app/repositories/user_repository.py`: `save`, `delete` 추가
-- `app/services/user_service.py`: `update_me`, `change_password`, `delete_me` 추가
-
-`schemas/user.py`, `user_repository.py`, `user_service.py`는 1번 파일에 내 코드를 **아래에 추가**한 것이라
-1번 코드가 바뀌면 통째로 덮어쓰지 말고 추가한 부분만 옮긴다.
+## 바뀐 파일 (모두 main 파일에 **추가만** 함)
+- `app/apis/user_apis.py`: 라우터 4개 (2번의 `CurrentUser`, `_delete_refresh_cookie` 사용)
+- `app/schemas/user.py`: `UpdateMeRequest`, `ChangePasswordRequest`
+- `app/repositories/user_repository.py`: `save`, `delete`
+- `app/services/user_service.py`: `update_me`, `change_password`, `delete_me`
 
 ## 팀 레포에 올리는 법 (내 PC)
 ```bash
 git switch main && git pull
-git switch -c feature/my-page origin/feature/signup   # 1번이 main에 머지됐으면 main에서
-git am 경로/4번_마이페이지/patch/0002-feat.patch              # 또는 파일을 직접 복붙 후 커밋
+git switch -c feature/my-page
+git am 경로/4번_마이페이지/patch/*.patch     # 안 되면 위 파일을 복사해 덮어쓴 뒤 커밋
 git push -u origin feature/my-page
 ```
-
-## 남은 일
-- 2번(JWT) 머지 후: `get_current_user`로 라우터 4개 연결 (GET/PATCH/DELETE `/users/me`, PATCH `/users/me/password`), 비번 변경·탈퇴 시 refresh 쿠키 삭제
-- Swagger 테스트 → PR
+그 다음 Swagger(`/docs`)에서 Authorize로 로그인 후 4개 API 확인 → PR.

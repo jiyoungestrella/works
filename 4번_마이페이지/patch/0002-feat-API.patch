@@ -1,0 +1,123 @@
+From 2e224fa4026c0801bdf9eb57da702cdcd855e3b9 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Mon, 26 Oct 2026 07:58:18 +0000
+Subject: [PATCH 2/2] =?UTF-8?q?feat:=20=EB=A7=88=EC=9D=B4=ED=8E=98?=
+ =?UTF-8?q?=EC=9D=B4=EC=A7=80=20=EC=A1=B0=ED=9A=8C=C2=B7=EC=A0=95=EB=B3=B4?=
+ =?UTF-8?q?=EC=88=98=EC=A0=95=C2=B7=EB=B9=84=EB=B0=80=EB=B2=88=ED=98=B8=20?=
+ =?UTF-8?q?=EB=B3=80=EA=B2=BD=C2=B7=ED=9A=8C=EC=9B=90=ED=83=88=ED=87=B4=20?=
+ =?UTF-8?q?API=20=EC=B6=94=EA=B0=80?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01W6KwnhSxEkAYVGWtxFTkgu
+---
+ .../app/apis/user_apis.py                     | 84 ++++++++++++++++++-
+ 1 file changed, 82 insertions(+), 2 deletions(-)
+
+diff --git a/AH_web_development_assignment/app/apis/user_apis.py b/AH_web_development_assignment/app/apis/user_apis.py
+index 6b0e19e..1f5ecc4 100644
+--- a/AH_web_development_assignment/app/apis/user_apis.py
++++ b/AH_web_development_assignment/app/apis/user_apis.py
+@@ -1,11 +1,13 @@
+ from typing import Annotated
+ 
+-from fastapi import APIRouter, Depends, status
++from fastapi import APIRouter, Depends, Response, status
+ from sqlalchemy.ext.asyncio import AsyncSession
+ 
++from app.apis.auth import _delete_refresh_cookie
+ from app.core.db.databases import async_get_db
++from app.core.dependencies import CurrentUser
+ from app.repositories.user_repository import UserRepository
+-from app.schemas.user import SignupRequest, UserResponse
++from app.schemas.user import ChangePasswordRequest, SignupRequest, UpdateMeRequest, UserResponse
+ from app.services.user_service import UserService
+ 
+ router = APIRouter(prefix="/api/v1/users", tags=["users"])
+@@ -31,3 +33,81 @@ async def signup(
+     service: Annotated[UserService, Depends(get_user_service)],
+ ):
+     return await service.signup(body)
++
++
++# ===== 마이페이지 (팀원 4) =====
++# 본인은 토큰의 user_id로만 판별한다. (경로·본문으로 회원 ID를 받지 않는다)
++
++# REQ-USER-006 내 정보 조회
++@router.get(
++    "/me",
++    response_model=UserResponse,
++    summary="내 정보 조회",
++    responses={401: {"description": "인증 실패"}, 403: {"description": "비활성 계정"}},
++)
++async def get_me(current_user: CurrentUser):
++    return current_user
++
++
++# REQ-USER-007 내 정보 수정
++@router.patch(
++    "/me",
++    response_model=UserResponse,
++    summary="내 정보 수정 (부서·휴대폰 번호)",
++    responses={
++        400: {"description": "수정할 항목 없음"},
++        401: {"description": "인증 실패"},
++        403: {"description": "비활성 계정"},
++        409: {"description": "휴대폰 번호 중복"},
++        422: {"description": "null·형식 오류, 수정할 수 없는 필드 입력"},
++    },
++)
++async def update_me(
++    body: UpdateMeRequest,
++    current_user: CurrentUser,
++    service: Annotated[UserService, Depends(get_user_service)],
++):
++    return await service.update_me(current_user, body)
++
++
++# REQ-USER-008 비밀번호 변경
++@router.patch(
++    "/me/password",
++    status_code=status.HTTP_204_NO_CONTENT,
++    summary="비밀번호 변경",
++    responses={
++        400: {"description": "기존 비밀번호 불일치 또는 새 비밀번호가 기존과 같음"},
++        401: {"description": "인증 실패"},
++        403: {"description": "비활성 계정"},
++        422: {"description": "새 비밀번호 규칙 위반"},
++    },
++)
++async def change_password(
++    body: ChangePasswordRequest,
++    response: Response,
++    current_user: CurrentUser,
++    service: Annotated[UserService, Depends(get_user_service)],
++) -> None:
++    await service.change_password(current_user, body)
++    # 현재 브라우저는 다시 로그인하도록 리프레시 쿠키를 삭제한다. (설계 문서 11-3)
++    _delete_refresh_cookie(response)
++
++
++# REQ-USER-009 회원탈퇴
++@router.delete(
++    "/me",
++    status_code=status.HTTP_204_NO_CONTENT,
++    summary="회원탈퇴",
++    responses={
++        401: {"description": "인증 실패"},
++        403: {"description": "비활성 계정"},
++        500: {"description": "삭제 실패 (롤백)"},
++    },
++)
++async def delete_me(
++    response: Response,
++    current_user: CurrentUser,
++    service: Annotated[UserService, Depends(get_user_service)],
++) -> None:
++    await service.delete_me(current_user)
++    _delete_refresh_cookie(response)
+-- 
+2.43.0
+
