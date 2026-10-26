@@ -1,0 +1,175 @@
+From 8d502b23f3042eb40f5c7e99228a039a6cd98f26 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Mon, 26 Oct 2026 07:35:07 +0000
+Subject: [PATCH 2/2] =?UTF-8?q?feat:=20=EB=A7=88=EC=9D=B4=ED=8E=98?=
+ =?UTF-8?q?=EC=9D=B4=EC=A7=80=20=EC=A0=95=EB=B3=B4=EC=88=98=EC=A0=95=C2=B7?=
+ =?UTF-8?q?=EB=B9=84=EB=B0=80=EB=B2=88=ED=98=B8=20=EB=B3=80=EA=B2=BD=C2=B7?=
+ =?UTF-8?q?=ED=9A=8C=EC=9B=90=ED=83=88=ED=87=B4=20=EC=8A=A4=ED=82=A4?=
+ =?UTF-8?q?=EB=A7=88=20=EB=B0=8F=20=EC=84=9C=EB=B9=84=EC=8A=A4=20=EB=A1=9C?=
+ =?UTF-8?q?=EC=A7=81=20=EC=B6=94=EA=B0=80?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+인증 의존성(get_current_user, 2번 담당)이 머지되면 라우터를 연결한다.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01W6KwnhSxEkAYVGWtxFTkgu
+---
+ .../app/repositories/user_repository.py       | 11 ++++
+ .../app/schemas/user.py                       | 38 +++++++++++++
+ .../app/services/user_service.py              | 54 +++++++++++++++++--
+ 3 files changed, 100 insertions(+), 3 deletions(-)
+
+diff --git a/AH_web_development_assignment/app/repositories/user_repository.py b/AH_web_development_assignment/app/repositories/user_repository.py
+index 55ba088..89ba6cf 100644
+--- a/AH_web_development_assignment/app/repositories/user_repository.py
++++ b/AH_web_development_assignment/app/repositories/user_repository.py
+@@ -26,3 +26,14 @@ class UserRepository:
+         await self.db.commit()
+         await self.db.refresh(user)
+         return user
++
++    async def save(self, user: User) -> User:
++        """이미 조회한 사용자 객체의 변경 사항을 저장한다."""
++        await self.db.commit()
++        await self.db.refresh(user)
++        return user
++
++    async def delete(self, user: User) -> None:
++        # 업로드한 X-ray의 uploader_id는 같은 트랜잭션에서 NULL로 바뀐다. (ON DELETE SET NULL)
++        await self.db.delete(user)
++        await self.db.commit()
+diff --git a/AH_web_development_assignment/app/schemas/user.py b/AH_web_development_assignment/app/schemas/user.py
+index df7c56f..554f232 100644
+--- a/AH_web_development_assignment/app/schemas/user.py
++++ b/AH_web_development_assignment/app/schemas/user.py
+@@ -9,6 +9,7 @@ from pydantic import (
+     EmailStr,
+     Field,
+     StringConstraints,
++    field_validator,
+ )
+ 
+ from app.models.enums import Department, Gender, Role
+@@ -71,6 +72,43 @@ class SignupRequest(BaseModel):
+     phone_number: PhoneNumber
+ 
+ 
++# REQ-USER-007 내 정보 수정 (부서·휴대폰 번호만 부분 수정)
++class UpdateMeRequest(BaseModel):
++    # 이메일·이름·권한 등 수정할 수 없는 필드가 들어오면 422로 거부한다.
++    model_config = ConfigDict(
++        extra="forbid",
++        json_schema_extra={"example": {"department": "research"}},
++    )
++
++    department: Department | None = None
++    phone_number: PhoneNumber | None = None
++
++    # 생략한 필드는 유지하고, null을 직접 보낸 경우만 거부한다.
++    # (기본값 None에는 검증 함수가 실행되지 않는다.)
++    @field_validator("department", "phone_number", mode="before")
++    @classmethod
++    def reject_null(cls, value: object) -> object:
++        if value is None:
++            raise ValueError("null은 입력할 수 없습니다.")
++        return value
++
++
++# REQ-USER-008 비밀번호 변경
++class ChangePasswordRequest(BaseModel):
++    model_config = ConfigDict(
++        extra="forbid",
++        json_schema_extra={
++            "example": {
++                "current_password": "Example123!",
++                "new_password": "Changed456!",
++            }
++        },
++    )
++
++    current_password: str = Field(min_length=1)
++    new_password: Password
++
++
+ # ===== 응답 (공통 UserResponse) =====
+ class UserResponse(BaseModel):
+     model_config = ConfigDict(from_attributes=True)
+diff --git a/AH_web_development_assignment/app/services/user_service.py b/AH_web_development_assignment/app/services/user_service.py
+index 789c8ec..016df2c 100644
+--- a/AH_web_development_assignment/app/services/user_service.py
++++ b/AH_web_development_assignment/app/services/user_service.py
+@@ -1,14 +1,18 @@
+ from fastapi import HTTPException, status
+-from sqlalchemy.exc import IntegrityError
++from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+ 
+-from app.core.security import hash_password
++from app.core.security import hash_password, verify_password
+ from app.models.enums import Role
+ from app.models.user import User
+ from app.repositories.user_repository import UserRepository
+-from app.schemas.user import SignupRequest
++from app.schemas.user import ChangePasswordRequest, SignupRequest, UpdateMeRequest
+ 
+ EMAIL_DUPLICATED = "이미 사용 중인 이메일입니다."
+ PHONE_DUPLICATED = "이미 사용 중인 휴대폰 번호입니다."
++NOTHING_TO_UPDATE = "수정할 항목을 하나 이상 입력하세요."
++WRONG_CURRENT_PASSWORD = "기존 비밀번호가 일치하지 않습니다."
++SAME_AS_CURRENT_PASSWORD = "새 비밀번호는 기존 비밀번호와 달라야 합니다."
++DELETE_FAILED = "잠시 후 다시 시도해주세요."
+ 
+ 
+ class UserService:
+@@ -41,3 +45,47 @@ class UserService:
+             message = str(e.orig).lower()
+             detail = PHONE_DUPLICATED if "phone_number" in message else EMAIL_DUPLICATED
+             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=detail) from e
++
++    # ===== 마이페이지 (팀원 4) =====
++    # user는 인증 의존성(get_current_user)이 토큰의 user_id로 조회한 본인 객체다.
++
++    # REQ-USER-007 내 정보 수정
++    async def update_me(self, user: User, data: UpdateMeRequest) -> User:
++        # 1. 보낸 필드만 수정 (생략한 필드는 유지)
++        updates = data.model_dump(exclude_unset=True)
++        if not updates:
++            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=NOTHING_TO_UPDATE)
++
++        # 2. 다른 회원이 쓰는 번호인지 확인 (본인이 쓰던 번호는 허용)
++        phone_number = updates.get("phone_number")
++        if phone_number and phone_number != user.phone_number:
++            if await self.repository.get_by_phone_number(phone_number):
++                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=PHONE_DUPLICATED)
++
++        for field, value in updates.items():
++            setattr(user, field, value)
++        try:
++            return await self.repository.save(user)
++        except IntegrityError as e:
++            # 동시에 같은 번호로 수정한 경우: DB UNIQUE 제약 위반 처리
++            await self.repository.db.rollback()
++            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=PHONE_DUPLICATED) from e
++
++    # REQ-USER-008 비밀번호 변경
++    async def change_password(self, user: User, data: ChangePasswordRequest) -> None:
++        if not verify_password(data.current_password, user.hashed_password):
++            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=WRONG_CURRENT_PASSWORD)
++        if verify_password(data.new_password, user.hashed_password):
++            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=SAME_AS_CURRENT_PASSWORD)
++
++        user.hashed_password = hash_password(data.new_password)
++        await self.repository.save(user)
++
++    # REQ-USER-009 회원탈퇴
++    async def delete_me(self, user: User) -> None:
++        # 사용자 행만 물리 삭제하고 X-ray·진료 데이터는 보존한다. 실패 시 롤백 후 500.
++        try:
++            await self.repository.delete(user)
++        except SQLAlchemyError as e:
++            await self.repository.db.rollback()
++            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=DELETE_FAILED) from e
+-- 
+2.43.0
+
