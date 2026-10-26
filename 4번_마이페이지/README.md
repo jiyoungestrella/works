@@ -4,8 +4,8 @@
 아직 팀 레포에는 올리지 않았다.
 
 ## 바뀐 파일
-- `app/models/xray_image.py`: uploader_id NULL 허용 + ON DELETE SET NULL
-- `alembic/versions/9f3b6d2a1c5e_xray_uploader_set_null.py`: 위 변경 마이그레이션 (1번 마이그레이션 7c1e2a9d4b10 다음)
+(탈퇴 시 uploader_id SET NULL은 1번 강선영님이 `feature/signup`에 넣어서 여기서는 뺐다.)
+
 - `app/schemas/user.py`: `UpdateMeRequest`, `ChangePasswordRequest` 추가
 - `app/repositories/user_repository.py`: `save`, `delete` 추가
 - `app/services/user_service.py`: `update_me`, `change_password`, `delete_me` 추가
@@ -17,7 +17,7 @@
 ```bash
 git switch main && git pull
 git switch -c feature/my-page origin/feature/signup   # 1번이 main에 머지됐으면 main에서
-git am 경로/4번_마이페이지/patch/*.patch              # 또는 파일을 직접 복붙 후 커밋
+git am 경로/4번_마이페이지/patch/0002-feat.patch              # 또는 파일을 직접 복붙 후 커밋
 git push -u origin feature/my-page
 ```
 
