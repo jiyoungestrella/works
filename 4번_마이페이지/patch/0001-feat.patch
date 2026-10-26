@@ -1,4 +1,4 @@
-From 0e7204e7f29a011028c52213a40b203cecebdbae Mon Sep 17 00:00:00 2001
+From 2c6d1b34572a968cc9e071f74bf09eb563e7244c Mon Sep 17 00:00:00 2001
 From: Claude <noreply@anthropic.com>
 Date: Mon, 26 Oct 2026 07:35:07 +0000
 Subject: [PATCH 1/2] =?UTF-8?q?feat:=20=EB=A7=88=EC=9D=B4=ED=8E=98?=
@@ -22,10 +22,10 @@ Claude-Session: https://claude.ai/code/session_01W6KwnhSxEkAYVGWtxFTkgu
  3 files changed, 100 insertions(+), 3 deletions(-)
 
 diff --git a/AH_web_development_assignment/app/repositories/user_repository.py b/AH_web_development_assignment/app/repositories/user_repository.py
-index 55ba088..89ba6cf 100644
+index be5b889..c9b6fde 100644
 --- a/AH_web_development_assignment/app/repositories/user_repository.py
 +++ b/AH_web_development_assignment/app/repositories/user_repository.py
-@@ -26,3 +26,14 @@ class UserRepository:
+@@ -52,3 +52,14 @@ class UserRepository:
          await self.db.commit()
          await self.db.refresh(user)
          return user
@@ -41,7 +41,7 @@ index 55ba088..89ba6cf 100644
 +        await self.db.delete(user)
 +        await self.db.commit()
 diff --git a/AH_web_development_assignment/app/schemas/user.py b/AH_web_development_assignment/app/schemas/user.py
-index df7c56f..554f232 100644
+index ea425e4..9e4542a 100644
 --- a/AH_web_development_assignment/app/schemas/user.py
 +++ b/AH_web_development_assignment/app/schemas/user.py
 @@ -9,6 +9,7 @@ from pydantic import (
@@ -52,7 +52,7 @@ index df7c56f..554f232 100644
  )
  
  from app.models.enums import Department, Gender, Role
-@@ -71,6 +72,43 @@ class SignupRequest(BaseModel):
+@@ -78,6 +79,43 @@ class SignupRequest(BaseModel):
      phone_number: PhoneNumber
  
  
@@ -97,7 +97,7 @@ index df7c56f..554f232 100644
  class UserResponse(BaseModel):
      model_config = ConfigDict(from_attributes=True)
 diff --git a/AH_web_development_assignment/app/services/user_service.py b/AH_web_development_assignment/app/services/user_service.py
-index 789c8ec..016df2c 100644
+index 95ccc1e..db7b6bd 100644
 --- a/AH_web_development_assignment/app/services/user_service.py
 +++ b/AH_web_development_assignment/app/services/user_service.py
 @@ -1,14 +1,18 @@
@@ -107,11 +107,11 @@ index 789c8ec..016df2c 100644
  
 -from app.core.security import hash_password
 +from app.core.security import hash_password, verify_password
- from app.models.enums import Role
+ from app.models.enums import Department, Role
  from app.models.user import User
  from app.repositories.user_repository import UserRepository
--from app.schemas.user import SignupRequest
-+from app.schemas.user import ChangePasswordRequest, SignupRequest, UpdateMeRequest
+-from app.schemas.user import RoleChangeRequest, SignupRequest
++from app.schemas.user import ChangePasswordRequest, RoleChangeRequest, SignupRequest, UpdateMeRequest
  
  EMAIL_DUPLICATED = "이미 사용 중인 이메일입니다."
  PHONE_DUPLICATED = "이미 사용 중인 휴대폰 번호입니다."
@@ -122,7 +122,7 @@ index 789c8ec..016df2c 100644
  
  
  class UserService:
-@@ -41,3 +45,47 @@ class UserService:
+@@ -61,3 +65,47 @@ class UserService:
              message = str(e.orig).lower()
              detail = PHONE_DUPLICATED if "phone_number" in message else EMAIL_DUPLICATED
              raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=detail) from e
