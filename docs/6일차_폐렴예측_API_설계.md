@@ -171,9 +171,6 @@ patients (환자)
 
 ```python
 class AnalysisResultResponse(BaseModel):
-    # "model_"로 시작하는 필드(model_version)는 Pydantic 예약 이름이라 경고가 나므로 해제
-    model_config = ConfigDict(from_attributes=True, protected_namespaces=())
-
     id: int
     record_id: int
     is_pneumonia: bool
@@ -781,10 +778,14 @@ AH_web_development_assignment/
 │   ├── models/best_model_fold0~4.pt # Git 제외, ZIP으로 공유
 │   └── model.py                     # MODEL_NAME, MODEL_VERSION, THRESHOLD, load_model, get_predictor, predict_pneumonia
 └── app/
-    ├── apis/analysis_apis.py        # ⑫ ⑬ ⑭
-    ├── schemas/analysis.py          # AnalysisResultResponse
-    ├── services/analysis_service.py # 재사용 판단, 추론 호출, 히트맵 저장, 잠금·이미지 재확인, 중복 처리
-    ├── repositories/analysis_repository.py
+    ├── apis/
+    │   ├── prediction_apis.py       # ⑫ 예측 (C)
+    │   └── analysis_apis.py         # ⑬ 목록 (B)
+    ├── services/
+    │   ├── prediction_service.py    # 재사용 판단, 추론 호출, 잠금·이미지 재확인, 중복 처리 (C)
+    │   └── analysis_service.py      # 목록 조회 (B)
+    ├── schemas/analysis.py          # AnalysisResultResponse, to_analysis_response (A)
+    ├── repositories/analysis_repository.py  # get_current, list_by_record, add, refresh (A)
     └── core/
         └── config.py                # AI_MAX_CONCURRENT_PREDICTIONS, AI_PRELOAD_MODEL
 ```
@@ -904,7 +905,7 @@ AH_web_development_assignment/
 | A | 김지영 | 1단계·3단계 인터페이스 분리, 히트맵 저장·실패 시 파일 정리 흐름, 3초 예산표, Merge 순서, 모델 파일 Git 업로드 검토, 버튼 중복 클릭 방지, 예측 함수 의존성 주입 |
 | B | 최현영 | 저장 시 잠금 + 이미지 ID 재확인, 추론 전 읽기 트랜잭션 종료, confidence 숫자 직렬화, 손상 이미지 422 구분, 샘플 모델 분석과 `state_dict` 로딩 방식, threshold 선택 방법 |
 | C | *(기입)* | `ai_model`·`model_version` 분리, 모델 출력 NaN 검증, 환자 단위 데이터 분리·검증셋 threshold·테스트셋 1회 평가, 최대값 기준 성능 판정, 비동기 worker 설계(F1), 이미지 ID 추적(F2) |
-| D | *(기입)* | 캐시 확인 후 모델 존재 검사, 폐렴 확률·threshold 저장(F3), 낮은 확신도 표시, 참고용 고지 문구, `protected_namespaces` 설정 |
+| D | *(기입)* | 캐시 확인 후 모델 존재 검사, 폐렴 확률·threshold 저장(F3), 낮은 확신도 표시, 참고용 고지 문구 |
 | E | *(기입)* | `field_serializer`를 이용한 confidence 직렬화 코드, 팀 이해 확인 체크리스트, 응답에 환자 식별 정보 제외 원칙 |
 
 **통합본 리뷰 반영**
@@ -922,6 +923,7 @@ AH_web_development_assignment/
 | 손상 이미지는 PIL `OSError`, NaN 출력은 `ValueError`라 422/500 구분이 뒤바뀜 | 5-2절에 예외 구분 요청, T31 추가 |
 | 모델 로딩 17.5초로 `--reload` 개발이 느리고 healthcheck가 실패할 수 있음 | `AI_PRELOAD_MODEL` 설정(D17), healthcheck `start_period` (6-2절), T30 |
 | 성능 측정값·히트맵·모델 파일 결정이 비어 있음 | 9절 측정표(추론 1.31초, 로딩 17.5초), Q1 (b), Q3 (c), Q6 1 기입. Recall·Accuracy는 미측정으로 명시 (10-1절) |
+| `model_version` 필드에 `protected_namespaces=()`가 필요하다고 적음 | 팀이 쓰는 Pydantic 2.12는 2.10부터 이 필드에 경고를 내지 않아 설정 제거 (2-2절) |
 
 ---
 
@@ -962,8 +964,8 @@ PR 리뷰 때 팀원 각자 아래 질문에 답할 수 있는지 확인한다. 
 |---|---|---|---|---|
 | 1단계 | 소혜진 | `worker/model.py` | EfficientNet-B0 5-fold 앙상블 추론, 1회 로딩, 출력 검증, 실행 검증 (히트맵 미구현) | |
 | 2단계 | 전원 | 설계 문서 | 5개 설계안 작성·비교·통합 (16절) | |
-| 3단계 | | DB 변경 | 마이그레이션, 모델·스키마·저장소 | |
-| 3단계 | | ⑫ 예측 | 재사용·동시성·이미지 교체·히트맵 저장 | |
-| 3단계 | | ⑬ 목록 | 결과 목록, 화면 연결 확인 | |
-| 3단계 | | ⑭ 히트맵 (선택) | 인증 히트맵 조회, 화면 열 | |
-| 검증 | | 통합·성능 | 실제 모델 통합, 9절 측정표, Swagger | |
+| 3단계 A | 김지영 | DB 기반 | 마이그레이션(`heatmap_url` NULL 허용, `model_version`, UNIQUE·CHECK), 모델, `AnalysisResultResponse` 스키마, `AnalysisRepository` | |
+| 3단계 B | 강선영 | ⑬ 목록 | 결과 목록 API (`analysis_apis.py`, `analysis_service.py`), 화면 연결 확인 | |
+| 3단계 C | 최현영 | ⑫ 예측 | 재사용(200/201), 트랜잭션 밖 추론, 잠금·이미지 ID 재확인(409), UNIQUE 충돌 처리 (`prediction_apis.py`, `prediction_service.py`) | |
+| 3단계 D | 서민서 | 모델 연결·설정 | `lifespan` → `app.state.predictor`, `AI_PRELOAD_MODEL`, 동시 추론 제한, `MODEL_NAME`·`MODEL_VERSION`·예외 구분, 9절 성능 측정 | |
+| 3단계 검토 | 소혜진 | 리뷰 | 3단계 PR 검토, 모델 관련 질문 대응 (1단계 전담) | |
