@@ -962,10 +962,10 @@ PR 리뷰 때 팀원 각자 아래 질문에 답할 수 있는지 확인한다. 
 
 | 단계 | 담당 | 작업 | 구현 내용 | PR |
 |---|---|---|---|---|
-| 1단계 | 소혜진 | `worker/model.py` | EfficientNet-B0 5-fold 앙상블 추론, 1회 로딩, 출력 검증, 실행 검증 (히트맵 미구현) | |
-| 2단계 | 전원 | 설계 문서 | 5개 설계안 작성·비교·통합 (16절) | |
-| 3단계 A | 김지영 | DB 기반 | 마이그레이션(`heatmap_url` NULL 허용, `model_version`, UNIQUE·CHECK), 모델, `AnalysisResultResponse` 스키마, `AnalysisRepository` | |
-| 3단계 B | 강선영 | ⑬ 목록 | 결과 목록 API (`analysis_apis.py`, `analysis_service.py`), 화면 연결 확인 | |
-| 3단계 C | 최현영 | ⑫ 예측 | 재사용(200/201), 트랜잭션 밖 추론, 잠금·이미지 ID 재확인(409), UNIQUE 충돌 처리 (`prediction_apis.py`, `prediction_service.py`) | |
-| 3단계 D | 서민서 | 모델 연결·설정 | `lifespan` → `app.state.predictor`, `AI_PRELOAD_MODEL`, 동시 추론 제한, `MODEL_NAME`·`MODEL_VERSION`·예외 구분, 9절 성능 측정 | |
-| 3단계 검토 | 소혜진 | 리뷰 | 3단계 PR 검토, 모델 관련 질문 대응 (1단계 전담) | |
+| 1단계 | 소혜진 (팀장) | `worker/model.py` | EfficientNet-B0 5-fold 앙상블 추론, 학습과 같은 전처리, 가중치 안전 로딩, 출력 검증, 의존성(`pyproject.toml`) 정리 | #34 |
+| 2단계 | 팀원 전원 (공동 취합) | 설계 문서 | 5개 설계안 작성·비교·통합, 통합본 리뷰 반영 | |
+| 3단계 A | 김지영 | DB 기반 | 마이그레이션(`heatmap_url` nullable, `model_version`, UNIQUE·CHECK), 모델·스키마·저장소 | #36 |
+| 3단계 B | 강선영 | ⑬ 결과 목록 | 진료기록 단위 결과 목록 API, 상세 화면 연결 확인 | |
+| 3단계 C | 최현영 | ⑫ 예측 | 재사용(200)·신규(201), 저장 시 잠금·이미지 재확인(409), 동시 요청 충돌 처리, 동시 추론 제한 | |
+| 3단계 D | 서민서 | 모델 연결 | `lifespan` 모델 로딩, `AI_PRELOAD_MODEL`, `MODEL_NAME`·`MODEL_VERSION`·`is_loaded()`, 성능 측정 | |
+| (선택) | Q1 결정 후 | ⑭ 히트맵 | 인증 히트맵 조회, 화면 열 | |
