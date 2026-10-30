@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>💖 상하이 여행 취향 탐구 </title>
   
-  <!-- 모바일 완벽 호환 레트로 픽셀 폰트 (Silkscreen & Gowun Dodum) 불러오기 -->
+  <!-- 모바일 호환 레트로 픽셀 폰트 (Silkscreen & Gowun Dodum) 불러오기 -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
@@ -68,14 +68,14 @@
 <body class="flex min-h-screen">
 
   <!-- 1. 🎶 우측 상단 고정 BGM 제어 버튼 -->
-  <div class="fixed top-5 right-5 z-50">
+  <div class="absolute top-5 right-5 z-50">
     <button id="bgmToggleBtn" onclick="toggleBGM()" class="bg-gray-400/90 hover:bg-gray-500 text-white font-bold text-xs px-3.5 py-2 rounded-full shadow-lg backdrop-blur-sm flex items-center gap-1.5 transition active:scale-95 border border-gray-300">
       <span class="text-sm">🎵</span>
       <span id="bgmText">BGM ▶</span>
     </button>
   </div>
 
-  <!-- 2. 🎵 실제 음악을 재생하는 로컬 오디오 태그 (song.mp3 연동) -->
+  <!-- 2. 🎵 실제 음악을 재생 로컬 오디오 태그 (song.mp3 연동) -->
   <audio id="bgmAudio" loop>
     <source src="./song.mp3" type="audio/mpeg">
   </audio>
@@ -119,7 +119,7 @@
         <a href="#section1" class="block p-2.5 rounded-xl hover:bg-pink-50 hover:text-pink-600 transition">🏢 1. 숙소 & 쇼핑</a>
         <a href="#section2" class="block p-2.5 rounded-xl hover:bg-pink-50 hover:text-pink-600 transition">🥟 2. 상하이의 식도락</a>
         <a href="#section3" class="block p-2.5 rounded-xl hover:bg-pink-50 hover:text-pink-600 transition">🏰 3. 이색 체험</a>
-        <a href="#section4" class="block p-2.5 rounded-xl hover:bg-pink-50 hover:text-pink-600 transition">🤝 4. 평화로운 선세팅!</a>
+        <a href="#section4" class="block p-2.5 rounded-xl hover:bg-pink-50 hover:text-pink-600 transition">🤝 4. 기타</a>
         <a href="#section5" class="block p-2.5 rounded-xl hover:bg-pink-50 hover:text-pink-600 transition">💌 5. 자유 기입</a>
       </nav>
     </div>
@@ -288,7 +288,7 @@
 
         <!-- [3. 이색 체험] -->
         <div id="section3" class="bg-sky-50/40 p-5 rounded-2xl border border-sky-100 space-y-4 pt-4">
-          <h2 class="text-xl font-bold text-sky-600 border-b border-sky-200 pb-2">🏰 3. 이색 체험 (복수 선택)</h2>
+          <h2 class="text-xl font-bold text-sky-600 border-b border-sky-200 pb-2">💫 3. 이색 체험 (복수 선택)</h2>
           
           <div class="grid grid-cols-2 gap-2 text-xs">
             <label class="flex items-center p-3 bg-white border border-sky-200 rounded-xl cursor-pointer hover:bg-sky-50 transition col-span-2">
@@ -383,8 +383,7 @@
       <!-- [제출 후 나타나는 정리본 결과 화면] -->
       <div id="resultContainer" class="hidden space-y-6 py-4">
         <div class="text-center pb-4 border-b-2 border-pink-100">
-          <span class="text-5xl inline-block mb-2">🥳✨</span>
-          <h2 class="custom-title-font !text-2xl">플랜 정리본</h2>
+          <span class="text-5xl inline-block mb-2">✨</span>
           <p class="text-xs text-gray-500 mt-1">설문 결과입니다</p>
         </div>
         
