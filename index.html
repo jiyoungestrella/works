@@ -5,11 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>💖 상하이 여행 취향 탐구 </title>
   
-  <!-- Bitcount Ink 웹폰트 CDN & Gowun Dodum 불러오기 -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/bitcount-ink@5.0.0/index.css">
+  <!-- Bitcount Ink & Gowun Dodum 웹폰트 불러오기 (모바일 사파리 호환 완료) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bitcount+Ink:wght@400;700&family=Gowun+Dodum&display=swap" rel="stylesheet">
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -24,9 +23,9 @@
       color: #4a3b4a;
     }
     
-    /* 💖 Bitcount Ink 폰트 + 핑크보라 스타일링 (사파리 완벽 지원) */
+    /* 💖 Bitcount Ink 폰트 + 핑크보라 스타일링 (모바일 완벽 호환) */
     .custom-title-font {
-      font-family: "Bitcount Ink", cursive, sans-serif;
+      font-family: "Bitcount Ink", system-ui, -apple-system, sans-serif;
       font-size: 2.3rem;
       font-weight: 700;
       color: #a84393; /* 핑크보라 컬러 */
@@ -35,7 +34,7 @@
     }
 
     .custom-subtitle-font {
-      font-family: "Bitcount Ink", cursive, sans-serif;
+      font-family: "Bitcount Ink", system-ui, -apple-system, sans-serif;
       font-size: 1.4rem;
       font-weight: 700;
       color: #c462b0; /* 연한 핑크보라 컬러 */
@@ -66,43 +65,45 @@
 </head>
 <body class="flex min-h-screen">
 
-  <!-- 🎶 우측 상단 고정 BGM 버튼 -->
+  <!-- 1. 🎶 우측 상단 고정 BGM 제어 버튼 -->
   <div class="fixed top-5 right-5 z-50">
-    <button id="bgmToggleBtn" onclick="toggleBGM()" class="bg-pink-500/90 hover:bg-pink-600 text-white font-bold text-xs px-3.5 py-2 rounded-full shadow-lg backdrop-blur-sm flex items-center gap-1.5 transition active:scale-95 border border-pink-300">
+    <button id="bgmToggleBtn" onclick="toggleBGM()" class="bg-gray-400/90 hover:bg-gray-500 text-white font-bold text-xs px-3.5 py-2 rounded-full shadow-lg backdrop-blur-sm flex items-center gap-1.5 transition active:scale-95 border border-gray-300">
       <span class="text-sm">🎵</span>
-      <span id="bgmText">BGM ⏸</span>
+      <span id="bgmText">BGM ▶</span>
     </button>
   </div>
 
-  <!-- 실제 소리가 나오는 보이지 않는 유튜브 플레이어 -->
-  <div id="youtubePlayerContainer" style="display:none;">
-    <iframe id="ytPlayer" src="https://www.youtube.com/embed/gxoj2vb8pIg?enablejsapi=1&autoplay=1&loop=1&playlist=gxoj2vb8pIg" allow="autoplay"></iframe>
-  </div>
+  <!-- 2. 🎵 실제 음악을 재생하는 로컬 오디오 태그 (song.mp3 연동) -->
+  <audio id="bgmAudio" loop>
+    <source src="./song.mp3" type="audio/mpeg">
+  </audio>
 
+  <!-- 3. 🎵 버튼 클릭 시 음악을 껐다 켜주는 자바스크립트 로직 -->
   <script>
-    let isPlaying = true;
+    let isPlaying = false;
 
     function toggleBGM() {
-      const iframe = document.getElementById('ytPlayer');
+      const audio = document.getElementById('bgmAudio');
       const bgmText = document.getElementById('bgmText');
       const btn = document.getElementById('bgmToggleBtn');
       
       if (isPlaying) {
-        iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+        audio.pause();
         bgmText.innerText = "BGM ▶";
+        // 일시정지 상태일 때의 회색 버튼 디자인
         btn.className = "bg-gray-400/90 hover:bg-gray-500 text-white font-bold text-xs px-3.5 py-2 rounded-full shadow-lg backdrop-blur-sm flex items-center gap-1.5 transition active:scale-95 border border-gray-300";
         isPlaying = false;
       } else {
-        iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+        audio.play().catch(error => {
+          console.log("자동 재생 차단됨:", error);
+        });
         bgmText.innerText = "BGM ⏸";
+        // 재생 중일 때의 분홍색 버튼 디자인
         btn.className = "bg-pink-500/90 hover:bg-pink-600 text-white font-bold text-xs px-3.5 py-2 rounded-full shadow-lg backdrop-blur-sm flex items-center gap-1.5 transition active:scale-95 border border-pink-300";
         isPlaying = true;
       }
     }
   </script>
-
-
-
 
   <!-- 🖥️ [좌측 고정 목차 콘텐츠] (모바일에서는 자동 숨김) -->
   <aside class="desktop-sidebar fixed left-0 top-0 h-full w-64 bg-white/80 backdrop-blur-md border-r-2 border-pink-200 p-6 flex flex-col justify-between z-20 shadow-sm">
@@ -132,9 +133,9 @@
       
       <!-- 🌆 메인 상단 배너 (shanghai.png 단독 적용) -->
       <div class="relative rounded-2xl overflow-hidden mb-6 shadow-md border-2 border-pink-200 h-60">
-        <img src="./shanghai.png" alt="상하이 야경" class="w-full h-full object-cover">
+        <img src="./sh.png" alt="상하이 야경" class="w-full h-full object-cover">
         <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end justify-center p-4">
-          <span class="text-pink-200 text-sm font-bold tracking-wide">울려라 상하이 로맨스~ 🎉</span>
+          <span class="text-pink-200 text-sm font-bold tracking-wide"></span>
         </div>
       </div>
 
@@ -147,6 +148,7 @@
           ꒰ঌ(*´꒳`*)໒꒱.
         </p>
       </div>
+
 
       <!-- 설문지 폼 -->
       <form id="travelForm" class="space-y-8">
@@ -164,11 +166,11 @@
               </label>
               <label class="flex items-center p-3 bg-white border border-pink-200 rounded-xl cursor-pointer hover:bg-pink-50 transition">
                 <input type="radio" name="hotel" value="10-15만" class="accent-pink-500">
-                <span class="ml-2 font-medium">🏨 깔끔함 (10~15만 원)</span>
+                <span class="ml-2 font-medium">🏨 깔끔 (10~15만 원)</span>
               </label>
               <label class="flex items-center p-3 bg-white border border-pink-200 rounded-xl cursor-pointer hover:bg-pink-50 transition">
                 <input type="radio" name="hotel" value="15-20만" class="accent-pink-500">
-                <span class="ml-2 font-medium">🛏️ 뷰 맛집 (15~20만 원)</span>
+                <span class="ml-2 font-medium">🛏️ 쾌적 (15~20만 원)</span>
               </label>
               <label class="flex items-center p-3 bg-white border border-pink-200 rounded-xl cursor-pointer hover:bg-pink-50 transition">
                 <input type="radio" name="hotel" value="20만이상" class="accent-pink-500">
@@ -182,15 +184,15 @@
             <div class="space-y-2 text-xs">
               <label class="flex items-center p-3 bg-white border border-pink-200 rounded-xl cursor-pointer hover:bg-pink-50 transition">
                 <input type="checkbox" name="shopping" value="디자이너브랜드" class="accent-pink-500" checked>
-                <span class="ml-2 font-bold text-pink-600">👗 디자이너 브랜드/옷가게 (슈슈통 Shushu/Tong 등)</span>
+                <span class="ml-2 font-bold text-pink-600">👗 브랜드/옷가게 (슈슈통 Shushu/Tong 등)</span>
               </label>
               <label class="flex items-center p-3 bg-white border border-pink-200 rounded-xl cursor-pointer hover:bg-pink-50 transition">
                 <input type="checkbox" name="shopping" value="명품" class="accent-pink-500">
-                <span class="ml-2 font-bold text-amber-600">👜 명품 쇼핑 (feat. 퇴사방지템 💼✨)</span>
+                <span class="ml-2 font-bold text-amber-600">👜 명품 쇼핑 (feat. 퇴사방지 )</span>
               </label>
               <label class="flex items-center p-3 bg-white border border-pink-200 rounded-xl cursor-pointer hover:bg-pink-50 transition">
                 <input type="checkbox" name="shopping" value="디즈니굿즈" class="accent-pink-500">
-                <span class="ml-2 font-medium">🛍️ 디즈니 굿즈 / 캐릭터 스토어 (미니소, 탑토이)</span>
+                <span class="ml-2 font-medium">🛍️ 굿즈 / 캐릭터 스토어 (미니소, 탑토이)</span>
               </label>
               <label class="flex items-center p-3 bg-white border border-pink-200 rounded-xl cursor-pointer hover:bg-pink-50 transition">
                 <input type="checkbox" name="shopping" value="로컬쇼핑" class="accent-pink-500">
@@ -206,7 +208,7 @@
               </label>
               <label class="flex items-center p-3 bg-white border border-pink-200 rounded-xl cursor-pointer hover:bg-pink-50 transition">
                 <input type="checkbox" name="shopping" value="구경만" class="accent-pink-500">
-                <span class="ml-2 font-medium">🙅‍♀️ 구경만 선호! (눈으로만 구경)</span>
+                <span class="ml-2 font-medium">🙅‍♀️ 구경만 선호! </span>
               </label>
             </div>
           </div>
@@ -289,23 +291,28 @@
           <div class="grid grid-cols-2 gap-2 text-xs">
             <label class="flex items-center p-3 bg-white border border-sky-200 rounded-xl cursor-pointer hover:bg-sky-50 transition col-span-2">
               <input type="checkbox" name="activity" value="디즈니랜드" class="accent-sky-500" checked>
-              <span class="ml-2 font-bold text-sky-600">🏰 디즈니랜드 (트론, 주토피아, 불꽃놀이)</span>
+              <span class="ml-2 font-bold text-sky-600">🏰 디즈니 (트론, 주토피아, 불꽃놀이)</span>
             </label>
             <label class="flex items-center p-3 bg-white border border-sky-200 rounded-xl cursor-pointer hover:bg-sky-50 transition">
               <input type="checkbox" name="activity" value="릴스찍기" class="accent-sky-500" checked>
-              <span class="ml-2 font-medium">🎬 숏폼 / 릴스 감성 영상 찍기</span>
+              <span class="ml-2 font-medium">🎬  릴스 감성 영상 찍기</span>
             </label>
             <label class="flex items-center p-3 bg-white border border-sky-200 rounded-xl cursor-pointer hover:bg-sky-50 transition">
               <input type="checkbox" name="activity" value="왕홍체험" class="accent-sky-500">
-              <span class="ml-2 font-medium">📸 왕홍 스타일 스냅 촬영</span>
+              <span class="ml-2 font-medium">📸 왕홍 스냅 촬영</span>
             </label>
             <label class="flex items-center p-3 bg-white border border-sky-200 rounded-xl cursor-pointer hover:bg-sky-50 transition">
               <input type="checkbox" name="activity" value="메이크업" class="accent-sky-500">
-              <span class="ml-2 font-medium">💄 현지 뷰티 / 메이크업</span>
+              <span class="ml-2 font-medium">💄  뷰티 / 메이크업 </span>
             </label>
             <label class="flex items-center p-3 bg-white border border-sky-200 rounded-xl cursor-pointer hover:bg-sky-50 transition">
               <input type="checkbox" name="activity" value="마사지" class="accent-sky-500">
               <span class="ml-2 font-medium">💆‍♀️ 여행 피로 싹 마사지</span>
+            </label>
+            </label>
+            <label class="flex items-center p-3 bg-white border border-sky-200 rounded-xl cursor-pointer hover:bg-sky-50 transition">
+              <input type="checkbox" name="activity" value="마사지" class="accent-sky-500">
+              <span class="ml-2 font-medium">⛲️수향마을</span>
             </label>
           </div>
           <input type="text" name="activity_etc" placeholder="기타 이색 체험 입력..." class="w-full p-2.5 border border-sky-200 rounded-xl text-xs focus:outline-none focus:border-sky-400 bg-white">
@@ -313,7 +320,7 @@
 
         <!-- [4. 평화로운 선세팅!] -->
         <div id="section4" class="bg-emerald-50/40 p-5 rounded-2xl border border-emerald-100 space-y-4 pt-4">
-          <h2 class="text-xl font-bold text-emerald-600 border-b border-emerald-200 pb-2">🤝 4. 평화로운 여행을 위한 선 세팅!</h2>
+          <h2 class="text-xl font-bold text-emerald-600 border-b border-emerald-200 pb-2">🧚 4. 기타 </h2>
           
           <div>
             <label class="block text-sm font-bold text-gray-700 mb-2">사진 촬영 스타일은? 📸</label>
@@ -338,7 +345,7 @@
               </label>
               <label class="flex items-center p-3 bg-white border border-emerald-200 rounded-xl cursor-pointer hover:bg-emerald-50 transition">
                 <input type="radio" name="pay" value="각자" class="accent-emerald-500">
-                <span class="ml-2 font-medium">📱 각자 정산: 결제자가 기록해 두고 밤에 1/N 정산하기</span>
+                <span class="ml-2 font-medium">📱 각자 정산: 결제자가 기록해 두고 여행 후 정산</span>
               </label>
             </div>
           </div>
@@ -348,7 +355,7 @@
             <div class="space-y-2 text-xs">
               <label class="flex items-center p-3 bg-white border border-emerald-200 rounded-xl cursor-pointer hover:bg-emerald-50 transition">
                 <input type="radio" name="rest" value="다같이" class="accent-emerald-500" checked>
-                <span class="ml-2 font-medium">☕ 다 같이 휴식: 한 명이라도 힘들면 바로 카페 들어가기!</span>
+                <span class="ml-2 font-medium">☕ 다 같이 휴식: 한 명이라도 힘들면 바로 호텔이나 카페 들어가기!</span>
               </label>
               <label class="flex items-center p-3 bg-white border border-emerald-200 rounded-xl cursor-pointer hover:bg-emerald-50 transition">
                 <input type="radio" name="rest" value="각자" class="accent-emerald-500">
