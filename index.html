@@ -431,6 +431,34 @@
       summaryHTML += `<p><strong>🔋 체력 방전 대처:</strong> ${rest}</p>`;
       summaryHTML += `<p><strong>💌 바라는 점:</strong> ${wish}</p>`;
 
+      // 📋 여기에 To-Do List 코드를 자바스크립트로 한 줄 추가해 줍니다!
+      summaryHTML += `
+      <div class="mt-6 bg-pink-50/70 rounded-2xl p-4 border border-pink-200 text-left">
+      <div class="flex items-center gap-1.5 mb-2.5">
+      <span class="text-base">📌</span>
+      <h3 class="font-bold text-pink-700 text-sm">오늘의 To-Do List</h3>
+      </div>
+      <ul class="space-y-2 text-xs font-semibold text-gray-700">
+      <li class="flex items-center gap-2 bg-white p-2 rounded-xl border border-pink-100 shadow-sm">
+        <input type="checkbox" id="todo1" class="w-4 h-4 accent-pink-500 rounded cursor-pointer">
+        <label for="todo1" class="cursor-pointer select-none">1. 🏨 숙소 정하기</label>
+      </li>
+      <li class="flex items-center gap-2 bg-white p-2 rounded-xl border border-pink-100 shadow-sm">
+        <input type="checkbox" id="todo2" class="w-4 h-4 accent-pink-500 rounded cursor-pointer">
+        <label for="todo2" class="cursor-pointer select-none">2. ✈️ 귀국편 비행기 자리 지정</label>
+      </li>
+      <li class="flex items-center gap-2 bg-white p-2 rounded-xl border border-pink-100 shadow-sm">
+        <input type="checkbox" id="todo3" class="w-4 h-4 accent-pink-500 rounded cursor-pointer">
+        <label for="todo3" class="cursor-pointer select-none">3. 🗺️ 2박 3일 계획 러프하게 정리</label>
+      </li>
+      <li class="flex items-center gap-2 bg-white p-2 rounded-xl border border-pink-100 shadow-sm">
+        <input type="checkbox" id="todo4" class="w-4 h-4 accent-pink-500 rounded cursor-pointer">
+        <label for="todo4" class="cursor-pointer select-none">4. 📱 필수 어플 깔기 (알리페이, 고덕지도 등)</label>
+      </li>
+      </ul>
+      </div>
+      `;
+
       document.getElementById('resultContent').innerHTML = summaryHTML;
       this.classList.add('hidden');
       document.getElementById('resultContainer').classList.remove('hidden');
